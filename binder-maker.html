@@ -121,7 +121,7 @@ code{font-size:14px;background:#f0ede4;padding:1px 4px;border-radius:4px}
     </div>
     <textarea id="src" spellcheck="false" placeholder="Paste lyrics here.
 
-Silent Night
+Song Title
 Key of C · Start on G   (optional)
 
 First verse line
@@ -169,7 +169,7 @@ const VERSE = /^\s*[\(\[]?\s*verse\s*\d*\s*[\)\]]?\s*[:.\-–—]?\s*/i;
 /* ---------- formatting tip (shows the same text as the empty Lyrics box) ---------- */
 (() => {
   const wrap = $('tipwrap'), btn = $('tipbtn');
-  $('tiptext').textContent = $('src').placeholder;
+  $('tiptext').textContent = $('src').placeholder.replace(/^Paste lyrics here\./, 'Paste lyrics in the following box.');
   const set = on => { wrap.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); };
   btn.addEventListener('click', e => { e.stopPropagation(); set(!wrap.classList.contains('open')); });
   document.addEventListener('click', e => { if (!wrap.contains(e.target)) set(false); });
