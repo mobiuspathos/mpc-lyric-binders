@@ -11,6 +11,8 @@ Turns pasted lyrics into letter-size binder pages in the Mission Peak Choir caro
 Opening the file inside Google Drive only shows a preview. Download it first.
 
 ## How to type lyrics
+Tap or hover the **?** next to Lyrics for a quick example. The full rules are under **How to type lyrics** in the tool.
+
 - **New song:** two blank lines. **New verse:** one blank line.
 - **Title:** the first line of each song.
 - **Key (optional):** a line starting with "Key" right under the title, like `Key of C · Start on G`.

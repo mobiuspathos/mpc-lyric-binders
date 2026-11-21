@@ -39,6 +39,15 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #songlist .t{flex:1}
 #songlist .m{font-size:14px;color:#555}
 #songlist .bad .m{color:var(--red);font-weight:700}
+.lyrhead{display:flex;align-items:center;gap:10px;position:relative}
+.tipbtn{width:48px;min-height:48px;height:48px;padding:0;border-radius:50%;font:700 22px Lato;line-height:1}
+.tipwrap{position:static}
+.tip{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(340px,100%);background:#fff;color:var(--ink);border:2px solid var(--green);border-radius:10px;box-shadow:0 4px 14px #0003;padding:14px 16px;font-size:16px;line-height:1.45}
+.tip::before{content:'';position:absolute;left:0;right:0;top:-10px;height:10px}
+.tip pre{font:400 16px/1.45 Lato;white-space:pre-wrap;margin:0 0 10px}
+.tip a{color:var(--green);font-weight:700;font-size:17px;display:inline-flex;align-items:center;min-height:44px}
+.tipwrap.open .tip{display:block}
+@media (hover:hover){.tipwrap:hover .tip{display:block}}
 details{font-size:15px;line-height:1.45}
 details summary{font-weight:700;font-size:17px;min-height:44px;display:flex;align-items:center;cursor:pointer}
 details ul{padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
@@ -99,7 +108,16 @@ code{font-size:14px;background:#f0ede4;padding:1px 4px;border-radius:4px}
       <input type="text" id="name" placeholder="Mission Peak Choir · Holiday Caroling">
     </label>
     <label class="chk"><input type="checkbox" id="toc"> Add a contents page</label>
-    <label for="src">Lyrics</label>
+    <div class="lyrhead">
+      <label for="src">Lyrics</label>
+      <div class="tipwrap" id="tipwrap">
+        <button type="button" class="tipbtn" id="tipbtn" aria-label="How to format lyrics" aria-expanded="false" aria-controls="tip">?</button>
+        <div class="tip" id="tip" role="tooltip">
+          <pre id="tiptext"></pre>
+          <a href="#help" id="tipmore">More help below</a>
+        </div>
+      </div>
+    </div>
     <textarea id="src" spellcheck="false" placeholder="Paste lyrics here.
 
 Silent Night
@@ -120,7 +138,7 @@ Two blank lines, then the next song's title"></textarea>
     <p class="note">Make PDF opens Chrome's print window. Choose <b>Save as PDF</b> and leave Scale at Default (100%).</p>
     <div id="status">Paste lyrics to start.</div>
     <ol id="songlist"></ol>
-    <details>
+    <details id="help">
       <summary>How to type lyrics</summary>
       <ul>
         <li><b>New song:</b> two blank lines. <b>New verse:</b> one blank line.</li>
@@ -146,6 +164,17 @@ const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;
 const norm = lines => lines.join(' ').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const LABEL = /^\s*[\(\[]?\s*(refrain|chorus)\s*[\)\]]?\s*[:.\-–—]?\s*/i;
 const VERSE = /^\s*[\(\[]?\s*verse\s*\d*\s*[\)\]]?\s*[:.\-–—]?\s*/i;
+
+/* ---------- formatting tip (shows the same text as the empty Lyrics box) ---------- */
+(() => {
+  const wrap = $('tipwrap'), btn = $('tipbtn');
+  $('tiptext').textContent = $('src').placeholder;
+  const set = on => { wrap.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); };
+  btn.addEventListener('click', e => { e.stopPropagation(); set(!wrap.classList.contains('open')); });
+  document.addEventListener('click', e => { if (!wrap.contains(e.target)) set(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('open')) { set(false); btn.focus(); } });
+  $('tipmore').addEventListener('click', e => { e.preventDefault(); set(false); const d = $('help'); d.open = true; d.scrollIntoView({behavior:'smooth', block:'start'}); d.querySelector('summary').focus({preventScroll:true}); });
+})();
 
 /* ---------- parsing ---------- */
 function splitHeader(text){
