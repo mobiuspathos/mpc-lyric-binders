@@ -40,7 +40,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #songlist .m{font-size:14px;color:#555}
 #songlist .bad .m{color:var(--red);font-weight:700}
 .lyrhead{display:flex;align-items:center;gap:10px;position:relative}
-.tipbtn{width:48px;min-height:48px;height:48px;padding:0;border-radius:50%;font:700 22px Lato;line-height:1}
+.tipbtn{position:relative;width:22px;min-height:22px;height:22px;padding:0;border-radius:50%;border-width:2px;font:700 14px Lato;line-height:1}
+.tipbtn::after{content:'';position:absolute;inset:-11px;border-radius:50%}
 .tipwrap{position:static}
 .tip{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:min(340px,100%);background:#fff;color:var(--ink);border:2px solid var(--green);border-radius:10px;box-shadow:0 4px 14px #0003;padding:14px 16px;font-size:16px;line-height:1.45}
 .tip::before{content:'';position:absolute;left:0;right:0;top:-10px;height:10px}
