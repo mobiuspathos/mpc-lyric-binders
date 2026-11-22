@@ -1,6 +1,7 @@
 # Run the tests:   docker compose run --rm test
 # Make a PDF:      docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf
 # Open the tool:   docker compose up -d web   then go to http://localhost:8080  (stop: docker compose down)
+#                  It rebuilds binder-maker.html when you save anything in src/. Reload the page to see it.
 services:
   test:
     build: .
@@ -19,9 +20,19 @@ services:
       - .:/app
       - /app/node_modules
     entrypoint: ["node", "scripts/render-pdf.js"]
+  watch:
+    build: .
+    image: mpc-binder-tools
+    init: true
+    volumes:
+      - .:/app
+      - /app/node_modules
+    entrypoint: ["node", "--watch-path=src", "scripts/build.js"]
   web:
     image: nginx:1.27-alpine
+    depends_on: [watch]
     ports:
       - "127.0.0.1:8080:80"   # this Mac only
     volumes:
-      - ./binder-maker.html:/usr/share/nginx/html/index.html:ro
+      - .:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro

@@ -9,7 +9,7 @@ There are two ways to open Binder Maker. Both need Chrome or Edge on a computer.
 
 **Docker (power-users, development).** With Docker Desktop running, run `docker compose up -d web` in this folder and go to http://localhost:8080. Stop it with `docker compose down`.
 - It works only on the Mac running it.
-- It shows the last build of `binder-maker.html`, not live edits. After editing `src/template.html`, run the build (or the tests) and reload the page.
+- It rebuilds `binder-maker.html` whenever you save a file in `src/`. Reload the page to see the change.
 - Text you type there is saved apart from the double-clicked file. Neither one sees the other's lyrics.
 
 Then:
