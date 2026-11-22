@@ -30,8 +30,26 @@ US Letter, no bleed, black and white. Double-sided, flip on long edge, 100% scal
 
 ## Developing
 - `src/template.html` is the source. `npm run build` inlines the fonts and writes `binder-maker.html`. Commit both.
-- `npm install` then `npm run pdf -- examples/holiday-caroling.txt out.pdf` renders a PDF headlessly (Playwright).
+- `docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf` renders a PDF without opening Chrome, and prints each song's type size. With Node.js installed, `npm install` then `npm run pdf -- examples/holiday-caroling.txt binder.pdf` does the same.
+- `docker compose up -d web` serves the tool at http://localhost:8080, on this Mac only. It shows the current `binder-maker.html`, so run the build (or the tests) after editing the template, then reload the page. Text typed there is saved separately from the double-clicked file. Stop it with `docker compose down`.
 - `scripts/convert-legacy.js` converts the old `songs.txt` markup to plain text.
 - Fonts in `src/fonts` are unmodified and under the SIL Open Font License (`src/fonts/OFL.txt`).
+
+## Testing
+Run the tests after any change, before committing. You only need Docker Desktop running; Node.js and the test browser live inside the container. In this folder:
+
+```bash
+docker compose run --rm test
+```
+
+The first run downloads the test image (about 3.7 GB) and takes a few minutes. After that it takes about 15 seconds. It rebuilds `binder-maker.html` from `src/template.html` first, then opens it in a hidden browser and checks:
+- **Typing rules:** songs, verses, titles, key box, refrains and cues, dropped `Verse 2` lines.
+- **Layout:** type stays between 16 and 30 pt, long lines wrap, too-long songs are flagged and the PDF is blocked, the contents page has a blank back, mirrored margins, US Letter.
+- **Editor:** the **?** tip opens on hover and tap and closes with Esc or a tap outside, **More help below** opens the help, and text is saved in the browser.
+- **The real binder:** all 17 songs in `examples/holiday-caroling.txt` fit with nothing flagged, and Hark! comes out at about 17 pt.
+
+It ends with "29 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
+
+When you change a rule on purpose, update the matching test in `tests/` in the same commit. If you change the Playwright version in `package.json`, change it in `Dockerfile` too.
 
 Only add lyrics you have the right to print, such as public-domain carols.

@@ -5,9 +5,12 @@
   "description": "Binder Maker: letter-size binder pages from pasted lyrics, in the Mission Peak Choir caroling layout",
   "scripts": {
     "build": "node scripts/build.js",
-    "pdf": "node scripts/render-pdf.js"
+    "pdf": "node scripts/render-pdf.js",
+    "pretest": "node scripts/build.js",
+    "test": "playwright test"
   },
   "devDependencies": {
-    "playwright": "^1.48.0"
+    "@playwright/test": "1.65.1",
+    "playwright": "1.65.1"
   }
 }

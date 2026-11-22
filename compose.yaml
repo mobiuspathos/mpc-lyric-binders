@@ -1,0 +1,27 @@
+# Run the tests:   docker compose run --rm test
+# Make a PDF:      docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf
+# Open the tool:   docker compose up -d web   then go to http://localhost:8080  (stop: docker compose down)
+services:
+  test:
+    build: .
+    image: mpc-binder-tools
+    init: true
+    ipc: host
+    volumes:
+      - .:/app               # use the files as they are on this computer right now
+      - /app/node_modules    # but keep the installed packages from the image
+  pdf:
+    build: .
+    image: mpc-binder-tools
+    init: true
+    ipc: host
+    volumes:
+      - .:/app
+      - /app/node_modules
+    entrypoint: ["node", "scripts/render-pdf.js"]
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "127.0.0.1:8080:80"   # this Mac only
+    volumes:
+      - ./binder-maker.html:/usr/share/nginx/html/index.html:ro
