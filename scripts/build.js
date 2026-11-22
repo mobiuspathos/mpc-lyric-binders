@@ -3,7 +3,7 @@
 const fs = require('fs'), path = require('path');
 const root = path.resolve(__dirname, '..');
 let s = fs.readFileSync(path.join(root, 'src/template.html'), 'utf8');
-for (const f of ['PlayfairDisplay-Bold', 'Oswald-Medium', 'Lato-Regular', 'Lato-Bold'])
+for (const f of ['PlayfairDisplay-Bold', 'Oswald-Medium', 'Lato-Regular', 'Lato-Bold', 'SourceSerif4-Regular', 'SourceSerif4-Bold'])
   s = s.replace(`{{${f}}}`, fs.readFileSync(path.join(root, 'src/fonts', f + '.ttf')).toString('base64'));
 if (/\{\{[\w-]+\}\}/.test(s)) throw new Error('A font placeholder was not filled');
 fs.writeFileSync(path.join(root, 'binder-maker.html'), s);

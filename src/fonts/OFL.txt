@@ -1,5 +1,9 @@
 Fonts in this folder are unmodified copies, each under the SIL Open Font License 1.1.
 
+==================== source serif 4 ====================
+Copyright 2014 - 2023 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe in the United States and/or other countries.
+Licensed under the SIL Open Font License, Version 1.1 (same text as below). Files: SourceSerif4-Regular.ttf, SourceSerif4-Bold.ttf, from Google Fonts.
+
 ==================== lato ====================
 Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name "Lato"
 

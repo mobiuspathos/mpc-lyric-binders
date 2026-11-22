@@ -26,7 +26,8 @@ Tap or hover the **?** next to Lyrics for a quick example. The full rules are un
 - **Key (optional):** a line starting with "Key" right under the title, like `Key of C · Start on G`.
 - **Refrains:** a verse that repeats word for word is a refrain. To mark one yourself, start it with `Refrain:` or `Chorus:`. A verse that is only `Refrain` prints as a cue. The first refrain prints in full; repeats print as a one-line cue.
 - Long lines wrap on their own. Lines like `Verse 2` are dropped.
-- Optional header lines at the top of a saved file: `Binder: <footer name>` and `Contents: yes|no`.
+- Optional header lines at the top of a saved file: `Binder: <footer name>`, `Contents: yes|no` and `Font: serif|sans`.
+- Lettering toggle: Serif (default: Playfair Display titles, Source Serif 4 lyrics) or Sans-serif (Lato titles and lyrics). An empty binder name prints no name in the footer.
 
 ## Rules the tool enforces
 - Type is as large as fits, up to 30 pt, and never below 16 pt. A song that is too long is flagged in red and the PDF is blocked. Cut a verse or split the song.

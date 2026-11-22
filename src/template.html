@@ -9,6 +9,8 @@
 @font-face{font-family:Oswald;src:url(data:font/ttf;base64,{{Oswald-Medium}}) format("truetype");font-weight:500}
 @font-face{font-family:Lato;src:url(data:font/ttf;base64,{{Lato-Regular}}) format("truetype");font-weight:400}
 @font-face{font-family:Lato;src:url(data:font/ttf;base64,{{Lato-Bold}}) format("truetype");font-weight:700}
+@font-face{font-family:"Source Serif 4";src:url(data:font/ttf;base64,{{SourceSerif4-Regular}}) format("truetype");font-weight:400}
+@font-face{font-family:"Source Serif 4";src:url(data:font/ttf;base64,{{SourceSerif4-Bold}}) format("truetype");font-weight:700}
 :root{--green:#3a4d12;--paper:#f3f0e9;--ink:#262a20;--red:#b00020;--s:.5}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--paper);color:var(--ink);font-family:Lato,sans-serif}
@@ -17,7 +19,6 @@ html,body{background:var(--paper);color:var(--ink);font-family:Lato,sans-serif}
 .app{display:flex;min-height:100vh}
 .panel{width:440px;flex:none;padding:20px;border-right:1px solid #cfc9bb;background:#fff;display:flex;flex-direction:column;gap:14px;height:100vh;position:sticky;top:0;overflow:auto}
 .panel h1{font:700 26px/1.1 "Playfair Display";color:var(--green)}
-.panel .sub{font:500 13px Oswald;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin-top:4px}
 .panel label{font-size:17px;font-weight:700;display:block}
 .panel input[type=text]{display:block;width:100%;margin-top:6px;font:400 18px Lato;padding:10px 12px;border:2px solid #8a8576;border-radius:8px;min-height:48px}
 .chk{display:flex!important;align-items:center;gap:12px;min-height:48px;cursor:pointer}
@@ -29,6 +30,16 @@ button{font:700 17px Lato;min-height:48px;padding:0 18px;border-radius:8px;borde
 button.primary{background:var(--green);color:#fff}
 button:disabled{opacity:.45;cursor:not-allowed}
 .note{font-size:15px;line-height:1.4}
+.fontpick{border:none}
+.fontpick legend{font-size:17px;font-weight:700;margin-bottom:6px}
+.seg{display:flex;align-items:center;gap:10px}
+.seg .fl{min-height:30px;padding:0 2px;border:none;background:none;color:#6b675c;font-size:16px;font-weight:400}
+.seg .fl[aria-pressed=true]{color:var(--ink);font-weight:700}
+#fSerif{font-family:"Source Serif 4"}
+#fSans{font-family:Lato}
+.sw{position:relative;flex:none;width:54px;min-height:0;height:30px;padding:0;border-radius:15px;border:2px solid var(--green);background:var(--green)}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw[aria-checked=true]::after{transform:translateX(24px)}
 #status{font-size:16px;line-height:1.4;border-radius:8px;padding:12px;background:#eef2e3}
 #status.bad{background:#fbe9ec;color:var(--red)}
 #status b{font-size:17px}
@@ -71,9 +82,11 @@ code{font-size:14px;background:#f0ede4;padding:1px 4px;border-radius:4px}
 .page.back header{flex-direction:row-reverse;text-align:right}
 .num{flex:none;width:.72in;height:.72in;border-radius:.14in;background:#000;color:#fff;font:700 30pt/1 Lato;display:flex;align-items:center;justify-content:center}
 .page h2{font:700 29pt/1.05 "Playfair Display"}
+.page.sans h2{font-family:Lato}
 .key{display:inline-block;margin-top:.08in;font:500 15pt/1 Oswald;letter-spacing:.06em;text-transform:uppercase;border:2pt solid #000;border-radius:.08in;padding:.06in .14in}
 .page main{flex:1;min-height:0;padding-top:.18in;overflow:hidden}
 .body{font-family:Lato;font-weight:400;line-height:1.2;overflow:hidden}
+.page.serif .body{font-family:"Source Serif 4"}
 .body.c2{column-count:2;column-gap:.35in;column-fill:balance}
 .st{break-inside:avoid;margin-bottom:.5em}
 .ln{padding-left:1.2em;text-indent:-1.2em}
@@ -103,11 +116,18 @@ code{font-size:14px;background:#f0ede4;padding:1px 4px;border-radius:4px}
   <aside class="panel">
     <div>
       <h1>Binder Maker</h1>
-      <div class="sub">Mission Peak Choir · letter binder pages</div>
     </div>
     <label>Binder name (printed in the footer)
-      <input type="text" id="name" placeholder="Mission Peak Choir · Holiday Caroling">
+      <input type="text" id="name" placeholder="Ensemble · Event">
     </label>
+    <fieldset class="fontpick">
+      <legend>Lettering</legend>
+      <div class="seg">
+        <button type="button" class="fl" id="fSans" aria-pressed="false">Sans-serif</button>
+        <button type="button" class="sw" id="fontSwitch" role="switch" aria-checked="true" aria-label="Serif lettering"></button>
+        <button type="button" class="fl" id="fSerif" aria-pressed="true">Serif</button>
+      </div>
+    </fieldset>
     <label class="chk"><input type="checkbox" id="toc"> Add a contents page</label>
     <div class="note" id="tocnote" hidden>Only one song, so no contents page is added.</div>
     <div class="lyrhead">
@@ -182,7 +202,7 @@ const VERSE = /^\s*[\(\[]?\s*verse\s*\d*\s*[\)\]]?\s*[:.\-–—]?\s*/i;
 function splitHeader(text){
   const lines = text.replace(/\r\n?/g,'\n').split('\n'); const meta = {};
   while (lines.length){
-    const m = lines[0].match(/^\s*(binder|contents)\s*:\s*(.*)$/i);
+    const m = lines[0].match(/^\s*(binder|contents|font)\s*:\s*(.*)$/i);
     if (m) { meta[m[1].toLowerCase()] = m[2].trim(); lines.shift(); }
     else if (!lines[0].trim() && Object.keys(meta).length) lines.shift();
     else break;
@@ -241,7 +261,7 @@ function stanzaHTML(b){
   return `<div class="st${b.type==='ref'?' ref':''}">${b.lines.map(l => `<div class="ln">${esc(l)}</div>`).join('')}</div>`;
 }
 function render(){
-  const name = $('name').value.trim() || $('name').placeholder;
+  const name = $('name').value.trim();
   const songs = parse($('src').value), N = songs.length, one = N === 1;
   // A one-song binder has no song number, no "Song 1 of 1" and no contents page.
   const toc = $('toc').checked && !one;
@@ -250,7 +270,7 @@ function render(){
   if (!N){ pv.innerHTML = '<div class="empty">Your pages will appear here.</div>'; $('songlist').innerHTML=''; setStatus([], 0); return; }
   let html = '';
   if (toc){
-    html += `<div class="pw" data-kind="toc"><div class="tag">Contents</div><section class="page front">
+    html += `<div class="pw" data-kind="toc"><div class="tag">Contents</div><section class="page front ${FONT}">
       <header><div class="ht"><h2>Songs in This Binder</h2></div></header>
       <main><div class="body wrap"><ol class="toc">${songs.map((s,i)=>`<li><span class="tn">${i+1}</span><span>${esc(s.title)}</span></li>`).join('')}</ol></div></main>
       <footer><span>${esc(name)}</span><span></span></footer></section></div>`;
@@ -258,7 +278,7 @@ function render(){
   }
   songs.forEach((s,i) => {
     const side = i % 2 === 0 ? 'front' : 'back';
-    html += `<div class="pw" id="p${i}"><div class="tag">Song ${i+1} · ${side==='front'?'right-hand page':'left-hand page'}</div><section class="page ${side}">
+    html += `<div class="pw" id="p${i}"><div class="tag">Song ${i+1} · ${side==='front'?'right-hand page':'left-hand page'}</div><section class="page ${side} ${FONT}">
       <header>${one ? '' : `<div class="num">${i+1}</div>`}<div class="ht"><h2>${esc(s.title)}</h2>${s.key?`<div class="key">${esc(s.key)}</div>`:''}</div></header>
       <main><div class="body">${s.blocks.map(stanzaHTML).join('')}</div></main>
       <footer><span>${esc(name)}</span><span>${one ? '' : `Song ${i+1} of ${N}`}</span></footer></section></div>`;
@@ -328,19 +348,28 @@ function scalePreview(){
 }
 
 /* ---------- saving ---------- */
-function save(){ try { localStorage.setItem(STORE, JSON.stringify({ name: $('name').value, toc: $('toc').checked, text: $('src').value })); } catch(e){} }
-function load(){ try { const d = JSON.parse(localStorage.getItem(STORE) || 'null'); if (d){ $('name').value = d.name || ''; $('toc').checked = !!d.toc; $('src').value = d.text || ''; } } catch(e){} }
+/* Lettering: serif (Playfair titles, Source Serif lyrics) or sans (Lato). Serif is the default. */
+let FONT = 'serif';
+function setFont(f){
+  FONT = f === 'sans' ? 'sans' : 'serif';
+  $('fSerif').setAttribute('aria-pressed', FONT === 'serif');
+  $('fSans').setAttribute('aria-pressed', FONT === 'sans');
+  $('fontSwitch').setAttribute('aria-checked', FONT === 'serif');
+}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify({ name: $('name').value, toc: $('toc').checked, font: FONT, text: $('src').value })); } catch(e){} }
+function load(){ try { const d = JSON.parse(localStorage.getItem(STORE) || 'null'); if (d){ $('name').value = d.name || ''; $('toc').checked = !!d.toc; setFont(d.font); $('src').value = d.text || ''; } } catch(e){} }
 function applyText(text){
   const { meta, body } = splitHeader(text);
   if (meta.binder !== undefined) $('name').value = meta.binder;
   if (meta.contents !== undefined) $('toc').checked = /^(y|yes|on|true|1)$/i.test(meta.contents);
+  if (meta.font !== undefined) setFont(/^sans/i.test(meta.font) ? 'sans' : 'serif');
   $('src').value = body.replace(/^\n+/,'');
   save(); render();
 }
 function slug(s){ return (s || 'binder').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'') || 'binder'; }
 $('save').onclick = () => {
   const name = $('name').value.trim();
-  const text = `Binder: ${name}\nContents: ${$('toc').checked ? 'yes' : 'no'}\n\n\n${$('src').value.replace(/\s+$/,'')}\n`;
+  const text = `Binder: ${name}\nContents: ${$('toc').checked ? 'yes' : 'no'}\nFont: ${FONT}\n\n\n${$('src').value.replace(/\s+$/,'')}\n`;
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type:'text/plain;charset=utf-8' }));
   a.download = slug(name || 'binder') + '.txt'; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -348,6 +377,9 @@ $('save').onclick = () => {
 $('open').onclick = () => $('file').click();
 $('file').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(applyText); e.target.value = ''; };
 $('src').addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f){ e.preventDefault(); f.text().then(applyText); } });
+$('fSerif').onclick = () => { setFont('serif'); save(); render(); };
+$('fSans').onclick = () => { setFont('sans'); save(); render(); };
+$('fontSwitch').onclick = () => { setFont(FONT === 'serif' ? 'sans' : 'serif'); save(); render(); };
 $('print').onclick = () => { if (!document.body.classList.contains('blocked')) window.print(); };
 $('songlist').onclick = e => { const b = e.target.closest('button'); if (b) $('p' + b.dataset.i).scrollIntoView({ behavior:'smooth', block:'start' }); };
 
@@ -357,7 +389,8 @@ const later = () => { clearTimeout(timer); timer = setTimeout(() => { save(); re
 window.addEventListener('resize', scalePreview);
 window.binderMaker = { applyText, render, parse };
 load();
-document.fonts.ready.then(() => { render(); document.body.dataset.ready = 1; });
+// Load every embedded font up front: fonts load only when first used, and fitting must measure the real font.
+Promise.all([...document.fonts].map(f => f.load())).then(() => document.fonts.ready).then(() => { render(); document.body.dataset.ready = 1; });
 </script>
 </body>
 </html>
