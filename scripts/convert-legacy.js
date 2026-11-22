@@ -1,6 +1,7 @@
 // Converts the old caroling-binder songs.txt markup (## Title | Key, R:, ~) to plain text.
 // Run: node scripts/convert-legacy.js songs.txt out.txt
 const fs=require('fs');
+if(process.argv.length<4){console.error('Usage: node scripts/convert-legacy.js songs.txt out.txt');process.exit(1)}
 const src=fs.readFileSync(process.argv[2],'utf8').split('\n');
 const songs=[];
 for(const raw of src){

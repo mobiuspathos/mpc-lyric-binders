@@ -37,10 +37,10 @@ Tap or hover the **?** next to Lyrics for a quick example. The full rules are un
 US Letter, no bleed, black and white. Double-sided, flip on long edge, 100% scale. Margins: 0.85 in binding side (mirrored), 0.5 in outside, 0.45 in top, 0.4 in bottom. Odd songs on right-hand pages, so each song is one open page with no turns.
 
 ## Developing
-- `src/template.html` is the source. `npm run build` inlines the fonts and writes `binder-maker.html`. Commit both.
+- `src/template.html` is the source. `docker compose run --rm build-html` inlines the fonts and writes `binder-maker.html`. Commit both. With Node.js installed, `npm run build` does the same.
 - `docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf` renders a PDF without opening Chrome, and prints each song's type size. With Node.js installed, `npm install` then `npm run pdf -- examples/holiday-caroling.txt binder.pdf` does the same.
 - To open the tool from Docker while you work on it, see **Docker (power-users, development)** under **Use it**.
-- `scripts/convert-legacy.js` converts the old `songs.txt` markup to plain text.
+- `docker compose run --rm convert-legacy songs.txt out.txt` converts the old `songs.txt` markup to plain text. Copy `songs.txt` into this folder first; Docker sees only this folder. With Node.js installed, `node scripts/convert-legacy.js songs.txt out.txt` does the same.
 - Fonts in `src/fonts` are unmodified and under the SIL Open Font License (`src/fonts/OFL.txt`).
 
 ## Testing
