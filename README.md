@@ -3,12 +3,20 @@
 Turns pasted lyrics into letter-size binder pages in the Mission Peak Choir caroling layout: one song per page, big type, black and white, double-sided.
 
 ## Use it
-1. Download `binder-maker.html` and double-click it. Use Chrome or Edge on a computer. It works offline.
+There are two ways to open Binder Maker. Both need Chrome or Edge on a computer.
+
+**Double-click (everyone).** Download `binder-maker.html` and double-click it. It works offline. Opening the file inside Google Drive only shows a preview. Download it first.
+
+**Docker (power-users, development).** With Docker Desktop running, run `docker compose up -d web` in this folder and go to http://localhost:8080. Stop it with `docker compose down`.
+- It works only on the Mac running it.
+- It shows the last build of `binder-maker.html`, not live edits. After editing `src/template.html`, run the build (or the tests) and reload the page.
+- Text you type there is saved apart from the double-clicked file. Neither one sees the other's lyrics.
+
+Then:
+1. Open Binder Maker one of the two ways above.
 2. Paste lyrics, or click **Open text** and pick a `.txt` file (try `examples/holiday-caroling.txt`).
 3. Check the preview. Fix anything by editing the text.
 4. Click **Make PDF** and choose **Save as PDF**. Leave Scale at Default (100%).
-
-Opening the file inside Google Drive only shows a preview. Download it first.
 
 ## How to type lyrics
 Tap or hover the **?** next to Lyrics for a quick example. The full rules are under **How to type lyrics** in the tool.
@@ -31,7 +39,7 @@ US Letter, no bleed, black and white. Double-sided, flip on long edge, 100% scal
 ## Developing
 - `src/template.html` is the source. `npm run build` inlines the fonts and writes `binder-maker.html`. Commit both.
 - `docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf` renders a PDF without opening Chrome, and prints each song's type size. With Node.js installed, `npm install` then `npm run pdf -- examples/holiday-caroling.txt binder.pdf` does the same.
-- `docker compose up -d web` serves the tool at http://localhost:8080, on this Mac only. It shows the current `binder-maker.html`, so run the build (or the tests) after editing the template, then reload the page. Text typed there is saved separately from the double-clicked file. Stop it with `docker compose down`.
+- To open the tool from Docker while you work on it, see **Docker (power-users, development)** under **Use it**.
 - `scripts/convert-legacy.js` converts the old `songs.txt` markup to plain text.
 - Fonts in `src/fonts` are unmodified and under the SIL Open Font License (`src/fonts/OFL.txt`).
 
