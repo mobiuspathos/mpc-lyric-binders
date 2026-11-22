@@ -109,6 +109,7 @@ code{font-size:14px;background:#f0ede4;padding:1px 4px;border-radius:4px}
       <input type="text" id="name" placeholder="Mission Peak Choir · Holiday Caroling">
     </label>
     <label class="chk"><input type="checkbox" id="toc"> Add a contents page</label>
+    <div class="note" id="tocnote" hidden>Only one song, so no contents page is added.</div>
     <div class="lyrhead">
       <label for="src">Lyrics</label>
       <div class="tipwrap" id="tipwrap">
@@ -241,7 +242,10 @@ function stanzaHTML(b){
 }
 function render(){
   const name = $('name').value.trim() || $('name').placeholder;
-  const songs = parse($('src').value), toc = $('toc').checked, N = songs.length;
+  const songs = parse($('src').value), N = songs.length, one = N === 1;
+  // A one-song binder has no song number, no "Song 1 of 1" and no contents page.
+  const toc = $('toc').checked && !one;
+  $('tocnote').hidden = !($('toc').checked && one);
   const pv = $('preview');
   if (!N){ pv.innerHTML = '<div class="empty">Your pages will appear here.</div>'; $('songlist').innerHTML=''; setStatus([], 0); return; }
   let html = '';
@@ -255,9 +259,9 @@ function render(){
   songs.forEach((s,i) => {
     const side = i % 2 === 0 ? 'front' : 'back';
     html += `<div class="pw" id="p${i}"><div class="tag">Song ${i+1} · ${side==='front'?'right-hand page':'left-hand page'}</div><section class="page ${side}">
-      <header><div class="num">${i+1}</div><div class="ht"><h2>${esc(s.title)}</h2>${s.key?`<div class="key">${esc(s.key)}</div>`:''}</div></header>
+      <header>${one ? '' : `<div class="num">${i+1}</div>`}<div class="ht"><h2>${esc(s.title)}</h2>${s.key?`<div class="key">${esc(s.key)}</div>`:''}</div></header>
       <main><div class="body">${s.blocks.map(stanzaHTML).join('')}</div></main>
-      <footer><span>${esc(name)}</span><span>Song ${i+1} of ${N}</span></footer></section></div>`;
+      <footer><span>${esc(name)}</span><span>${one ? '' : `Song ${i+1} of ${N}`}</span></footer></section></div>`;
   });
   pv.innerHTML = html; scalePreview();
   const results = [];
@@ -316,7 +320,7 @@ function setStatus(results, pages){
   const sheets = Math.ceil(pages / 2);
   st.innerHTML = bad.length
     ? `<b>${bad.length === 1 ? '1 song is' : bad.length + ' songs are'} too long.</b><br>${bad.map(r => esc(r.title)).join(', ')} won't fit on one page at 16 pt. Cut a verse or split it into two songs. The PDF is blocked until then.`
-    : `<b>Ready to print.</b><br>${results.length} song${results.length>1?'s':''}, ${pages} pages, ${sheets} sheet${sheets>1?'s':''} double-sided. Smallest type: ${Math.min(...results.map(r=>r.size))} pt.`;
+    : `<b>Ready to print.</b><br>${results.length} song${results.length>1?'s':''}, ${pages} page${pages>1?'s':''}, ${sheets} sheet${sheets>1?'s':''} double-sided. Smallest type: ${Math.min(...results.map(r=>r.size))} pt.`;
 }
 function scalePreview(){
   const pv = $('preview'); const w = pv.clientWidth - 32;

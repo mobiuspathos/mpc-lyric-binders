@@ -93,6 +93,32 @@ test('no contents page unless it is turned on', async ({ page }) => {
   await expect(page.locator('.pw[data-kind]')).toHaveCount(0);
 });
 
+test('a one-song binder has no song number, no "Song 1 of 1" and no contents page', async ({ page }, info) => {
+  await loadLyrics(page, 'Binder: Test Binder\nContents: yes\n\n\nOnly Song\nKey of C\n\nla la la');
+  await expect(page.locator('.pw[data-kind]')).toHaveCount(0);
+  await expect(page.locator('#p0 .num')).toHaveCount(0);
+  await expect(page.locator('#p0 h2')).toHaveText('Only Song');
+  await expect(page.locator('#p0 .key')).toHaveText('Key of C');
+  await expect(page.locator('#p0 footer')).toHaveText('Test Binder');
+  await expect(page.locator('#tocnote')).toBeVisible();
+  await expect(page.locator('#status')).toContainText('1 song, 1 page,');
+  // Title sits flush with the left margin where the number box used to be.
+  const gap = await page.$eval('#p0 .page', p => p.querySelector('h2').getBoundingClientRect().left - p.querySelector('header').getBoundingClientRect().left);
+  expect(gap).toBeLessThan(1);
+
+  const file = info.outputPath('one-song.pdf');
+  await page.emulateMedia({ media: 'print' });
+  await page.pdf({ path: file, preferCSSPageSize: true, printBackground: true });
+  expect(pdfInfo(file).pages).toBe(1);
+});
+
+test('two or more songs keep their numbers and "Song N of M"', async ({ page }) => {
+  await loadLyrics(page, 'One\n\na\n\n\nTwo\n\nb');
+  await expect(page.locator('.pw[id] .num')).toHaveText(['1', '2']);
+  await expect(page.locator('#p1 footer')).toContainText('Song 2 of 2');
+  await expect(page.locator('#tocnote')).toBeHidden();
+});
+
 test('odd songs are right-hand pages, even songs left-hand', async ({ page }) => {
   await loadLyrics(page, ['A', 'B', 'C', 'D'].map(t => `${t}\n\nla`).join('\n\n\n'));
   const sides = await page.$$eval('.pw[id] .page', els => els.map(e => e.classList.contains('front') ? 'right' : 'left'));

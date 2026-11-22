@@ -32,6 +32,7 @@ Tap or hover the **?** next to Lyrics for a quick example. The full rules are un
 - Type is as large as fits, up to 30 pt, and never below 16 pt. A song that is too long is flagged in red and the PDF is blocked. Cut a verse or split the song.
 - Layout is locked to the approved brand sheet: Lato (lyrics), Playfair Display (titles), Oswald (key box).
 - Contents page (optional) goes on its own sheet with a blank back, so songs still start on a right-hand page.
+- A binder with only one song has no song number box, no "Song 1 of 1" in the footer (the binder name stays), and no contents page even if that box is ticked.
 
 ## Printing
 US Letter, no bleed, black and white. Double-sided, flip on long edge, 100% scale. Margins: 0.85 in binding side (mirrored), 0.5 in outside, 0.45 in top, 0.4 in bottom. Odd songs on right-hand pages, so each song is one open page with no turns.
@@ -52,11 +53,11 @@ docker compose run --rm test
 
 The first run downloads the test image (about 3.7 GB) and takes a few minutes. After that it takes about 15 seconds. It rebuilds `binder-maker.html` from `src/template.html` first, then opens it in a hidden browser and checks:
 - **Typing rules:** songs, verses, titles, key box, refrains and cues, dropped `Verse 2` lines.
-- **Layout:** type stays between 16 and 30 pt, long lines wrap, too-long songs are flagged and the PDF is blocked, the contents page has a blank back, mirrored margins, US Letter.
+- **Layout:** type stays between 16 and 30 pt, long lines wrap, too-long songs are flagged and the PDF is blocked, the contents page has a blank back, a one-song binder drops the song number and contents page, mirrored margins, US Letter.
 - **Editor:** the **?** tip opens on hover and tap and closes with Esc or a tap outside, **More help below** opens the help, and text is saved in the browser.
 - **The real binder:** all 17 songs in `examples/holiday-caroling.txt` fit with nothing flagged, and Hark! comes out at about 17 pt.
 
-It ends with "29 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
+It ends with "31 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
 
 When you change a rule on purpose, update the matching test in `tests/` in the same commit. If you change the Playwright version in `package.json`, change it in `Dockerfile` too.
 
