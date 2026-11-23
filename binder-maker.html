@@ -182,34 +182,24 @@ Two blank lines, then the next song's title"></textarea>
 <script>
 const MIN = 16, MAX = 30, STORE = 'mpc-binder-maker-v1';
 const $ = id => document.getElementById(id);
+/* Shared by Binder Maker and Booklet Maker: reads typed lyrics into songs. Inlined into both tools by scripts/build.js. */
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const norm = lines => lines.join(' ').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 const LABEL = /^\s*[\(\[]?\s*(refrain|chorus)\s*[\)\]]?\s*[:.\-–—]?\s*/i;
 const VERSE = /^\s*[\(\[]?\s*verse\s*\d*\s*[\)\]]?\s*[:.\-–—]?\s*/i;
 
-/* ---------- formatting tip (shows the same text as the empty Lyrics box) ---------- */
-(() => {
-  const wrap = $('tipwrap'), btn = $('tipbtn');
-  $('tiptext').textContent = $('src').placeholder.replace(/^Paste lyrics here\./, 'Paste lyrics in the following box.');
-  const set = on => { wrap.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); };
-  btn.addEventListener('click', e => { e.stopPropagation(); set(!wrap.classList.contains('open')); });
-  document.addEventListener('click', e => { if (!wrap.contains(e.target)) set(false); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('open')) { set(false); btn.focus(); } });
-  $('tipmore').addEventListener('click', e => { e.preventDefault(); set(false); const d = $('help'); d.open = true; d.scrollIntoView({behavior:'smooth', block:'start'}); d.querySelector('summary').focus({preventScroll:true}); });
-})();
-
-/* ---------- parsing ---------- */
 function splitHeader(text){
   const lines = text.replace(/\r\n?/g,'\n').split('\n'); const meta = {};
   while (lines.length){
-    const m = lines[0].match(/^\s*(binder|contents|font)\s*:\s*(.*)$/i);
+    const m = lines[0].match(/^\s*(binder|contents|font|booklet|subtitle|closing)\s*:\s*(.*)$/i);
     if (m) { meta[m[1].toLowerCase()] = m[2].trim(); lines.shift(); }
     else if (!lines[0].trim() && Object.keys(meta).length) lines.shift();
     else break;
   }
   return { meta, body: lines.join('\n') };
 }
-function parse(text){
+// With { full: true } every repeated refrain keeps its full lines (the booklet prints them in full each time).
+function parse(text, opts = {}){
   const { body } = splitHeader(text);
   const songs = []; let stanzas = [[]], blanks = 0;
   const flush = () => { const st = stanzas.filter(s => s.length); if (st.length) songs.push(st); stanzas = [[]]; };
@@ -223,6 +213,7 @@ function parse(text){
   return songs.map(st => {
     const first = st[0], title = first.shift(); let key = '';
     if (first.length && /^key\b/i.test(first[0])) key = first.shift();
+    const underTitle = first.length > 0;
     const raw = st.filter(s => s.length);
     // labels
     const verses = [];
@@ -242,18 +233,33 @@ function parse(text){
       verses.push({ lines, labeled });
     }
     const count = {}; verses.forEach(v => { if (v.lines.length){ const n = norm(v.lines); count[n] = (count[n]||0) + 1; } });
-    const seen = new Set(); let lastRef = null; let refrains = 0;
+    const seen = new Set(); let lastRef = null, lastRefLines = null, refrains = 0;
     const blocks = verses.map(v => {
-      if (!v.lines.length) return { type:'cue', text: lastRef };
+      if (!v.lines.length) return opts.full && lastRefLines ? { type:'cue', text: lastRef, lines: lastRefLines } : { type:'cue', text: lastRef };
       const n = norm(v.lines), isRef = v.labeled || count[n] >= 2;
       if (!isRef) return { type:'verse', lines: v.lines };
-      if (seen.has(n)) return { type:'cue', text: v.lines[0] };
-      seen.add(n); refrains++; lastRef = v.lines[0];
+      if (seen.has(n)) return opts.full ? { type:'cue', text: v.lines[0], lines: v.lines } : { type:'cue', text: v.lines[0] };
+      seen.add(n); refrains++; lastRef = v.lines[0]; lastRefLines = v.lines;
       return { type:'ref', lines: v.lines };
     });
-    return { title, key, blocks, verses: blocks.filter(b => b.type === 'verse').length, refrains };
+    const song = { title, key, blocks, verses: blocks.filter(b => b.type === 'verse').length, refrains };
+    if (opts.full) song.underTitle = underTitle;   // the first block started right under the title line (no blank line)
+    return song;
   });
 }
+
+
+/* ---------- formatting tip (shows the same text as the empty Lyrics box) ---------- */
+(() => {
+  const wrap = $('tipwrap'), btn = $('tipbtn');
+  $('tiptext').textContent = $('src').placeholder.replace(/^Paste lyrics here\./, 'Paste lyrics in the following box.');
+  const set = on => { wrap.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); };
+  btn.addEventListener('click', e => { e.stopPropagation(); set(!wrap.classList.contains('open')); });
+  document.addEventListener('click', e => { if (!wrap.contains(e.target)) set(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('open')) { set(false); btn.focus(); } });
+  $('tipmore').addEventListener('click', e => { e.preventDefault(); set(false); const d = $('help'); d.open = true; d.scrollIntoView({behavior:'smooth', block:'start'}); d.querySelector('summary').focus({preventScroll:true}); });
+})();
+
 
 /* ---------- rendering ---------- */
 function stanzaHTML(b){

@@ -2,10 +2,11 @@
   "name": "mpc-lyric-binders",
   "version": "1.0.0",
   "private": true,
-  "description": "Binder Maker: letter-size binder pages from pasted lyrics, in the Mission Peak Choir caroling layout",
+  "description": "Binder Maker and Booklet Maker: caroling binder pages and the caroling booklet from pasted lyrics, in the Mission Peak Choir layout",
   "scripts": {
     "build": "node scripts/build.js",
     "pdf": "node scripts/render-pdf.js",
+    "booklet": "node scripts/render-booklet.js",
     "pretest": "node scripts/build.js",
     "test": "playwright test"
   },

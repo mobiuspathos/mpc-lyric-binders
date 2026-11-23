@@ -2,6 +2,8 @@
 
 Turns pasted lyrics into letter-size binder pages in the Mission Peak Choir caroling layout: one song per page, big type, black and white, double-sided.
 
+This folder also holds **Booklet Maker** (`booklet-maker.html`), which makes the Holiday Caroling booklet. See [Booklet Maker](#booklet-maker) below.
+
 ## Use it
 There are two ways to open Binder Maker. Both need Chrome or Edge on a computer.
 
@@ -38,8 +40,26 @@ Tap or hover the **?** next to Lyrics for a quick example. The full rules are un
 ## Printing
 US Letter, no bleed, black and white. Double-sided, flip on long edge, 100% scale. Margins: 0.85 in binding side (mirrored), 0.5 in outside, 0.45 in top, 0.4 in bottom. Odd songs on right-hand pages, so each song is one open page with no turns.
 
+## Booklet Maker
+Makes the Holiday Caroling booklet in its three versions from one text:
+- **Booklet:** 5.5 × 8.5 in pages in reading order, for email and screens.
+- **PRINT:** letter paper, landscape, two booklet pages per side in fold order. Print double-sided, flip on short edge, 100% scale; fold the stack and staple the fold.
+- **Phone:** 5 in wide pages with bigger type. The type shrinks (down to 14 pt) to keep each song on one page; if that isn't enough, the song carries on to a second page at 16 pt or more.
+
+**Reorder songs** by dragging the big ≡ handle (mouse or finger) or tapping ▲ ▼; the contents and page numbers follow. Open `booklet-maker.html` the same two ways as Binder Maker (Docker: http://localhost:8080/booklet-maker.html). The first time, it starts with the 2026 booklet (`examples/caroling-booklet.txt`). Use **Add a song**, pick a version, and press **Make PDF**. Chrome names the PDF after the booklet title, with `_PRINT` or `_mobile` added.
+
+Rules it follows:
+- Same typing rules as Binder Maker. Repeated refrains print in full, in bold, every time.
+- Header lines at the top of a saved file: `Booklet:`, `Subtitle:`, `Closing:` (a `/` starts the smaller second line on the back cover) and `Font: serif|sans`.
+- A section titled `Did You Know?` becomes a facts page after the songs. A line right under that title is its subtitle; each paragraph is one fact.
+- Type is as big as fits: 13 to 16 pt in the booklet, 16 to 20 pt on the phone. Sizes that keep every line whole win. No song needs a page turn mid-song: it fits one page, or two facing pages (it then starts on a left-hand page; a "Did You Know?" page, or a lined page, fills any gap before it). A song too long for that is flagged with a note and still prints with a page turn; the PDF is never blocked. Cutting a verse or splitting the song fixes it. On the phone a spill to a second page is fine. "Did You Know?" facts are spaced to fill their page. The Serif / Sans-serif switch is on the main panel.
+- The booklet and PRINT are always a multiple of 4 pages; spare pages become "Our Favorites" pages with lines. The phone version is not padded.
+- Colors and fonts follow the approved brand sheet: Deep Green titles and icons, Ink text, Lato / Playfair Display / Oswald (Source Serif 4 lyrics when Serif is picked).
+
+`docker compose run --rm booklet-pdf examples/caroling-booklet.txt booklet-pdfs` writes all three PDFs into `booklet-pdfs/` and prints each song's type size and pages. With Node.js installed, `npm run booklet -- examples/caroling-booklet.txt booklet-pdfs` does the same.
+
 ## Developing
-- `src/template.html` is the source. `docker compose run --rm build-html` inlines the fonts and writes `binder-maker.html`. Commit both. With Node.js installed, `npm run build` does the same.
+- `src/template.html` (Binder Maker) and `src/booklet.html` (Booklet Maker) are the sources; `src/lyrics-core.js` is the lyrics reader both share. `docker compose run --rm build-html` inlines the fonts, the shared code and the starter booklet, and writes `binder-maker.html` and `booklet-maker.html`. Commit the sources and both built files. With Node.js installed, `npm run build` does the same.
 - `docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf` renders a PDF without opening Chrome, and prints each song's type size. With Node.js installed, `npm install` then `npm run pdf -- examples/holiday-caroling.txt binder.pdf` does the same.
 - To open the tool from Docker while you work on it, see **Docker (power-users, development)** under **Use it**.
 - `docker compose run --rm convert-legacy songs.txt out.txt` converts the old `songs.txt` markup to plain text. Copy `songs.txt` into this folder first; Docker sees only this folder. With Node.js installed, `node scripts/convert-legacy.js songs.txt out.txt` does the same.
@@ -58,7 +78,9 @@ The first run downloads the test image (about 3.7 GB) and takes a few minutes. A
 - **Editor:** the **?** tip opens on hover and tap and closes with Esc or a tap outside, **More help below** opens the help, and text is saved in the browser.
 - **The real binder:** all 17 songs in `examples/holiday-caroling.txt` fit with nothing flagged, and Hark! comes out at about 17 pt.
 
-It ends with "31 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
+- **Booklet Maker:** the 2026 booklet renders in all three versions, page order and the multiple of 4, two-page songs on facing pages, too-long songs flagged but never blocked, phone shrink-then-spill, contents page numbers, the serif switch, PRINT fold order, PDF page sizes, **Add a song**, and big tap targets on a phone, and reordering songs by mouse drag, finger drag, arrow keys and ▲ ▼.
+
+It ends with "59 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
 
 When you change a rule on purpose, update the matching test in `tests/` in the same commit. If you change the Playwright version in `package.json`, change it in `Dockerfile` too.
 

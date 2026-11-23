@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booklet Maker</title>
+<style>
+@font-face{font-family:"Playfair Display";src:url(data:font/ttf;base64,{{PlayfairDisplay-Bold}}) format("truetype");font-weight:700}
+@font-face{font-family:Oswald;src:url(data:font/ttf;base64,{{Oswald-Medium}}) format("truetype");font-weight:500}
+@font-face{font-family:Lato;src:url(data:font/ttf;base64,{{Lato-Regular}}) format("truetype");font-weight:400}
+@font-face{font-family:Lato;src:url(data:font/ttf;base64,{{Lato-Bold}}) format("truetype");font-weight:700}
+@font-face{font-family:"Source Serif 4";src:url(data:font/ttf;base64,{{SourceSerif4-Regular}}) format("truetype");font-weight:400}
+@font-face{font-family:"Source Serif 4";src:url(data:font/ttf;base64,{{SourceSerif4-Bold}}) format("truetype");font-weight:700}
+/* Colors from the approved brand sheet: Deep Green titles, Ink text, Paper behind the editor. */
+:root{--green:#3a4d12;--olive:#5f7a22;--paper:#f3f0e9;--ink:#262a20;--muted:#5d6354;--red:#b00020;--s:.6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:Lato,sans-serif}
+
+/* ---------- editor (screen only) ---------- */
+.app{display:flex;min-height:100vh}
+.panel{width:460px;flex:none;padding:20px;border-right:1px solid #cfc9bb;background:#fff;display:flex;flex-direction:column;gap:16px;height:100vh;position:sticky;top:0;overflow:auto}
+.panel h1{font:700 28px/1.1 "Playfair Display";color:var(--green)}
+.intro{font-size:17px;line-height:1.45}
+.panel label{font-size:18px;font-weight:700;display:block}
+.panel input[type=text]{display:block;width:100%;margin-top:6px;font:400 18px Lato;padding:10px 12px;border:2px solid #8a8576;border-radius:8px;min-height:50px;color:var(--ink)}
+textarea{display:block;width:100%;margin-top:6px;font:400 18px/1.45 Lato;padding:12px;border:2px solid #8a8576;border-radius:8px;resize:vertical;color:var(--ink)}
+#src{min-height:360px}
+#newWords{min-height:220px}
+input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+button{font:700 18px Lato;min-height:50px;padding:0 18px;border-radius:8px;border:2px solid var(--green);background:#fff;color:var(--green);cursor:pointer}
+button.primary{background:var(--green);color:#fff}
+button.big{width:100%;min-height:56px;font-size:19px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:16px;line-height:1.45}
+fieldset{border:none}
+legend{font-size:18px;font-weight:700;margin-bottom:8px}
+.versions{display:flex;flex-direction:column;gap:8px}
+.versions button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;min-height:64px;padding:8px 16px;color:var(--ink);border-color:#8a8576;font-weight:400}
+.versions button b{font-size:19px;color:var(--green)}
+.versions button span{font-size:16px}
+.versions button[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+.versions button[aria-pressed=true] b{color:#fff}
+.seg{display:flex;align-items:center;gap:10px}
+.seg .fl{min-height:44px;padding:0 4px;border:none;background:none;color:#6b675c;font-size:17px;font-weight:400}
+.seg .fl[aria-pressed=true]{color:var(--ink);font-weight:700}
+#fSerif{font-family:"Source Serif 4"}
+#fSans{font-family:Lato}
+.sw{position:relative;flex:none;width:58px;min-height:0;height:32px;padding:0;border-radius:16px;border:2px solid var(--green);background:var(--green)}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw[aria-checked=true]::after{transform:translateX(26px)}
+.sw::before{content:'';position:absolute;inset:-8px}
+#status{font-size:17px;line-height:1.45;border-radius:8px;padding:12px 14px;background:#eef2e3}
+#status.bad{background:#fbe9ec;color:var(--red)}
+#status.warn{background:#fbf3d6}
+#status b{font-size:18px}
+#added{font-size:17px;line-height:1.45;border-radius:8px;padding:10px 14px;background:#eef2e3}
+#added.bad{background:#fbe9ec;color:var(--red)}
+#songlist{list-style:none;display:flex;flex-direction:column;gap:2px}
+#songlist li{display:flex;align-items:stretch;gap:4px;border-radius:8px;position:relative}
+#songlist .go{flex:1;min-width:0;text-align:left;border:none;border-radius:6px;font-weight:400;color:var(--ink);padding:8px 10px;min-height:52px;display:flex;gap:10px;align-items:center;background:transparent;font-size:17px}
+#songlist .go:hover{background:#f0ede4}
+#songlist .h,#songlist .mv{flex:none;width:52px;min-height:52px;padding:0;border:2px solid #8a8576;color:var(--green);background:#fff;font-size:24px;line-height:1}
+#songlist .h{touch-action:none;cursor:grab;font-size:30px}
+#songlist li.dragging{background:#eef2e3;outline:3px solid var(--green)}
+#songlist li.dragging .h{cursor:grabbing}
+#songlist li.drop-above::before,#songlist li.drop-below::after{content:'';position:absolute;left:0;right:0;height:5px;background:var(--green);border-radius:3px}
+#songlist li.drop-above::before{top:-4px}
+#songlist li.drop-below::after{bottom:-4px}
+@media (max-width:600px){#songlist{gap:8px}#songlist li{flex-wrap:wrap;padding:4px;border:1px solid #d8d3c6}#songlist .go{flex:1 1 100%;order:-1}#songlist .h,#songlist .mv{flex:1 1 0;width:auto;min-height:56px}}
+body.dragging-song{user-select:none;-webkit-user-select:none}
+#songlist .n{font-weight:700;min-width:1.6em}
+#songlist .t{flex:1}
+#songlist .m{font-size:15px;color:var(--muted)}
+details.box{border:2px solid #d8d3c6;border-radius:10px;padding:4px 14px}
+details.box[open]{padding-bottom:14px}
+details.box>summary{font-weight:700;font-size:19px;min-height:52px;display:flex;align-items:center;cursor:pointer;color:var(--green)}
+details.box .inner{display:flex;flex-direction:column;gap:14px}
+details.help ul{padding-left:1.2em;display:flex;flex-direction:column;gap:8px;font-size:16px;line-height:1.45}
+code{font-size:15px;background:#f0ede4;padding:1px 4px;border-radius:4px}
+.preview{flex:1;min-width:0;padding:24px 16px;background:#bdb8ab;overflow:auto}
+.pw{width:calc(var(--w)*var(--s));height:calc(var(--h)*var(--s));margin:26px auto 18px;position:relative;box-shadow:0 2px 8px #0005;background:#fff}
+.pw>.bp,.pw>.sheet{transform:scale(var(--s));transform-origin:0 0;position:absolute;top:0;left:0}
+.pw.flag{outline:5px solid var(--red)}
+.pw .tag{position:absolute;left:0;right:0;top:-1px;transform:translateY(-100%);font:700 15px Lato;color:#222;padding:2px 0}
+.empty{max-width:520px;margin:60px auto;font-size:19px;line-height:1.5;text-align:center;color:#222}
+@media (max-width:900px){.app{flex-direction:column}.panel{width:auto;height:auto;position:static;border-right:none}.preview{padding:16px}}
+
+/* ---------- printed pages ---------- */
+/* Booklet: 5.5 x 8.5 in (half letter). Phone: 360 x 640 pt, the size of the current mobile PDF. */
+.bp{width:var(--pw);height:var(--ph);padding:var(--pt) var(--px) var(--pb);display:flex;flex-direction:column;overflow:hidden;background:#fff;color:var(--ink);text-align:center;position:relative;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.v-booklet{--pw:5.5in;--ph:8.5in;--pt:.5in;--px:.5in;--pb:.3in;--tt:20pt;--kt:11pt;--ct:13pt;--ic:.42in;--cv:30pt}
+.v-mobile{--pw:5in;--ph:8.888889in;--pt:.4in;--px:.3in;--pb:.22in;--tt:24pt;--kt:13pt;--ct:15pt;--ic:.46in;--cv:34pt}
+.bp header{flex:none}
+.bp .ic{width:var(--ic);height:var(--ic);color:var(--green);display:block;margin:0 auto .07in}
+.bp h2{font:700 var(--tt)/1.12 "Playfair Display";color:var(--green)}
+.bp.sans h2,.bp.sans .cvt,.bp.sans .bkt{font-family:Lato}
+.bp .key{font:500 var(--kt)/1.2 Oswald;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-top:.06in}
+.bp header.cont h2{font-size:var(--ct)}
+.bp .contd{font:italic 400 var(--kt)/1.3 Lato;color:var(--muted)}
+.bp .sub{font:italic 400 var(--kt)/1.3 Lato;color:var(--muted);margin-top:.04in}
+.bp main{flex:1;min-height:0;padding-top:.16in;overflow:hidden}
+.bp .body{font-family:Lato;line-height:1.28}
+.bp.serif .body.lyr{font-family:"Source Serif 4"}
+.bst{margin-bottom:.6em}
+.bst:last-child{margin-bottom:0}
+.bst.ref{font-weight:700}
+.bst.cue{font-style:italic}
+.bln{text-wrap:balance}
+.bp footer{flex:none;height:.2in;font:400 10pt Lato;color:var(--ink);display:flex;align-items:flex-end;justify-content:center}
+.v-mobile footer{font-size:11pt}
+/* contents */
+.toc-b{text-align:left;line-height:1.25}
+.toc{list-style:none}
+.toc-b li{list-style:none;display:flex;align-items:baseline;gap:.4em;padding:.17em 0}
+.toc-b .tn{min-width:1.6em;text-align:right;color:var(--muted)}
+.toc-b .tt{flex:0 1 auto}
+.toc-b .dots{min-width:1em}
+.toc-b .dots{flex:1;border-bottom:1.5pt dotted #5d6354;transform:translateY(-.25em)}
+.toc-b .pg{font-weight:700;min-width:1.4em;text-align:right}
+/* Did You Know? */
+.facts{text-align:left;line-height:1.35}
+.fact{display:flex;gap:.7em;align-items:flex-start;margin-bottom:1.1em}
+.fact:last-child{margin-bottom:0}
+.facts.spread{height:100%;display:flex;flex-direction:column;justify-content:space-evenly}
+.facts.spread .fact{margin:0}
+.fact svg{flex:none;width:2.2em;height:2.2em;color:var(--green)}
+/* Our Favorites (fills the booklet to a multiple of 4 pages) */
+.lines{height:100%;display:flex;flex-direction:column;justify-content:space-evenly;padding:0 .1in}
+.lines i{display:block;border-bottom:1.5pt solid #5d6354}
+/* covers */
+.bp.cover{justify-content:center;align-items:center;background-color:#fff;background-image:var(--trees);background-size:.62in .62in}
+.card{background:#fff;padding:.4in .3in;width:82%;display:flex;flex-direction:column;align-items:center;gap:.12in}
+.card .ic{width:calc(var(--ic)*2.2);height:calc(var(--ic)*2.2);margin:0}
+.card .ic.sm{width:var(--ic);height:var(--ic)}
+.cvt{font:700 var(--cv)/1.08 "Playfair Display";color:var(--green)}
+.cvs{font:400 calc(var(--kt)*1.35)/1.3 Lato}
+.cvc{font:500 var(--kt)/1.2 Oswald;letter-spacing:.08em;text-transform:uppercase;color:var(--green)}
+.bkt{font:700 calc(var(--tt)*1.1)/1.15 "Playfair Display";color:var(--green)}
+/* PRINT: two booklet pages side by side on letter paper, landscape */
+.sheet{width:11in;height:8.5in;display:flex;background:#fff}
+
+@media print{
+  html,body{background:#fff}
+  .panel,.tag,.empty,#measure{display:none!important}
+  .app{display:block}
+  .preview{padding:0;background:#fff;overflow:visible}
+  .pw{width:auto;height:auto;margin:0;box-shadow:none;outline:none!important;position:static}
+  .pw>.bp,.pw>.sheet{transform:none;position:static;page-break-after:always;break-after:page}
+}
+</style>
+<style id="pagesize">@page{size:5.5in 8.5in;margin:0}</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div>
+      <h1>Booklet Maker</h1>
+    </div>
+    <p class="intro">Makes the Holiday Caroling booklet. Add your songs below, check the pages, then press <b>Make PDF</b>.</p>
+
+    <fieldset>
+      <legend>Which version?</legend>
+      <div class="versions" id="versions">
+        <button type="button" data-v="booklet" aria-pressed="true"><b>Booklet</b><span>Small pages in reading order, 5.5 × 8.5 in</span></button>
+        <button type="button" data-v="print" aria-pressed="false"><b>PRINT</b><span>Letter paper, folds into the booklet</span></button>
+        <button type="button" data-v="mobile" aria-pressed="false"><b>Phone</b><span>Bigger type, for reading on a phone</span></button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Lettering</legend>
+      <div class="seg">
+        <button type="button" class="fl" id="fSans" aria-pressed="true">Sans-serif</button>
+        <button type="button" class="sw" id="fontSwitch" role="switch" aria-checked="false" aria-label="Serif lettering"></button>
+        <button type="button" class="fl" id="fSerif" aria-pressed="false">Serif</button>
+      </div>
+    </fieldset>
+
+    <div id="status">Loading…</div>
+    <button type="button" class="primary big" id="print">Make PDF</button>
+    <p class="note" id="printnote"></p>
+
+    <details class="box" id="addbox" open>
+      <summary>Add a song</summary>
+      <div class="inner">
+        <label>Song title
+          <input type="text" id="newTitle" autocomplete="off">
+        </label>
+        <label>Key and starting note (optional)
+          <input type="text" id="newKey" placeholder="Key of C · Start on G" autocomplete="off">
+        </label>
+        <label for="newWords">Words</label>
+        <textarea id="newWords" spellcheck="false" placeholder="Leave one blank line between verses."></textarea>
+        <button type="button" class="primary big" id="addSong">Add to booklet</button>
+        <div id="added" hidden></div>
+      </div>
+    </details>
+
+    <div>
+      <p class="note"><b>Songs</b>: drag <b>≡</b> to reorder, or tap <b>▲ ▼</b>. Tap a name to see its page.</p>
+      <ol id="songlist"></ol>
+    </div>
+
+    <details class="box">
+      <summary>Cover and lettering</summary>
+      <div class="inner">
+        <label>Booklet title
+          <input type="text" id="bTitle">
+        </label>
+        <label>Under the title
+          <input type="text" id="bSub">
+        </label>
+        <label>Back cover (a / starts a smaller second line)
+          <input type="text" id="bClose">
+        </label>
+      </div>
+    </details>
+
+    <details class="box">
+      <summary>All the words (edit, move or remove songs)</summary>
+      <div class="inner">
+        <p class="note">Every song is here, in booklet order. Two blank lines between songs, one between verses.</p>
+        <textarea id="src" spellcheck="false"></textarea>
+        <div class="btns">
+          <button type="button" id="open">Open text</button>
+          <button type="button" id="save">Save text</button>
+          <button type="button" id="reset">Start over</button>
+        </div>
+        <p class="note"><b>Start over</b> puts back the 2026 booklet and removes your changes.</p>
+      </div>
+    </details>
+
+    <details class="box help" id="help">
+      <summary>How it works</summary>
+      <ul>
+        <li><b>New song:</b> two blank lines, then the title. <b>New verse:</b> one blank line.</li>
+        <li><b>Key (optional):</b> a line starting with "Key" right under the title, like <code>Key of C · Start on G</code>.</li>
+        <li><b>Refrains:</b> a verse that repeats word for word prints in bold every time. To mark one yourself, start it with <code>Refrain:</code>.</li>
+        <li><b>Reorder songs:</b> drag the <b>≡</b> handle next to a song, or tap <b>▲ ▼</b>. The contents and page numbers update. (Or cut and paste in "All the words".)</li>
+        <li><b>Did You Know?</b> pages: a section titled <code>Did You Know?</code>. Each paragraph is one fact. They print after the songs and are not in the contents.</li>
+        <li>Type is as big as fits: 13 to 16 pt in the booklet, 16 to 20 pt on the phone. On the phone each song is kept on one page by shrinking the type to 14 pt; only if that is not enough does it carry on to a second page. A song never needs a page turn: it fits one page, or two facing pages (it then starts on a left-hand page, and a spare page may be added before it). A song too long for that is flagged with a note, and still prints with a page turn. Make PDF is never blocked.</li>
+        <li>The booklet is always a multiple of 4 pages, so it folds. Spare pages become "Our Favorites" pages with lines to write on.</li>
+        <li>Your text is kept in this browser. Use <b>Save text</b> to keep a copy as a file.</li>
+        <li>Only add words you have the right to print, such as public-domain carols.</li>
+      </ul>
+    </details>
+    <input type="file" id="file" accept=".txt,text/plain" hidden>
+  </aside>
+  <section class="preview" id="preview"><div class="empty">Your pages will appear here.</div></section>
+</div>
+<div id="measure" aria-hidden="true" style="position:absolute;left:-10000px;top:0;visibility:hidden"></div>
+
+<script>
+const STORE = 'mpc-booklet-maker-v1';
+const STARTER = {{starter-text}};
+const $ = id => document.getElementById(id);
+{{lyrics-core}}
+
+/* ---------- the three versions ---------- */
+// Type sizes in pt. min is never undercut; a song that won't fit at min carries on to a "(continued)" page.
+const VER = {
+  booklet: { min:13, max:16, tocMin:11, tocMax:15, dykMin:13, dykMax:20, page:'5.5in 8.5in', w:'5.5in', h:'8.5in', suffix:'' },
+  mobile:  { oneMin:14, min:16, max:20, tocMin:13, tocMax:17, dykMin:15, dykMax:24, page:'5in 8.888889in', w:'5in', h:'8.888889in', suffix:'_mobile' },
+};
+VER.print = Object.assign({}, VER.booklet, { page:'11in 8.5in', w:'11in', h:'8.5in', suffix:'_PRINT' });
+
+/* ---------- icons (simple line drawings, Deep Green) ---------- */
+const svg = d => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICONS = [
+  svg('<path d="M12 2.5l6 8.5h-3l4.5 6.5H4.5L9 11H6z"/><path d="M12 17.5v4"/>'),                                  // tree
+  svg('<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.8 1.8H4.2z"/><path d="M10 20.5a2 2 0 0 0 4 0"/><path d="M12 3v2"/>'), // bell
+  svg('<path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6L12 16.2 6.6 19.3l1.3-6L3.3 9.2l6.1-.6z"/>'),                      // star
+  svg('<path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/><path d="M9.5 3.5L12 6l2.5-2.5M9.5 20.5L12 18l2.5 2.5M3.6 10.3l3.4-.9-.9-3.4M20.4 13.7l-3.4.9.9 3.4M3.6 13.7l3.4.9-.9 3.4M20.4 10.3l-3.4-.9.9-3.4"/>'), // snowflake
+  svg('<circle cx="12" cy="10.5" r="9.6" stroke-width="1.5"/><circle cx="12" cy="10.5" r="4.9" stroke-width="1.5"/><circle cx="12.00" cy="3.30" r="1.15" fill="currentColor" stroke="none"/><circle cx="16.23" cy="4.68" r="1.15" fill="currentColor" stroke="none"/><circle cx="18.85" cy="8.28" r="1.15" fill="currentColor" stroke="none"/><circle cx="18.85" cy="12.72" r="1.15" fill="currentColor" stroke="none"/><circle cx="16.23" cy="16.32" r="1.15" fill="currentColor" stroke="none"/><circle cx="12.00" cy="17.70" r="1.15" fill="currentColor" stroke="none"/><circle cx="7.77" cy="16.32" r="1.15" fill="currentColor" stroke="none"/><circle cx="5.15" cy="12.72" r="1.15" fill="currentColor" stroke="none"/><circle cx="5.15" cy="8.28" r="1.15" fill="currentColor" stroke="none"/><circle cx="7.77" cy="4.68" r="1.15" fill="currentColor" stroke="none"/><path fill="#fff" stroke-width="1.5" d="M12 20.2C9.5 17.8 5.2 18.3 5 20.6c.2 2.2 4.6 2.6 7-.4zM12 20.2c2.5-2.4 6.8-1.9 7 .4-.2 2.2-4.6 2.6-7-.4z"/><circle cx="12" cy="20.4" r="1.1" fill="#fff" stroke-width="1.3"/>'),       // wreath with bow, like the original booklet
+  svg('<circle cx="12" cy="14" r="7"/><path d="M10 7V5h4v2M12 5V3"/><path d="M5.5 12.5c4 1.5 9 1.5 13 0"/>'),       // ornament
+  svg('<path d="M12 13C9 9 4 10 3 6c3 0 4-2 6-1 1-2 3-1 3 1"/><path d="M12 13c3-4 8-3 9-7-3 0-4-2-6-1-1-2-3-1-3 1"/><circle cx="10.5" cy="16" r="1.6"/><circle cx="13.5" cy="16" r="1.6"/><circle cx="12" cy="18.8" r="1.6"/>'), // holly
+];
+const TREES = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3l5 7h-3l4.5 6.5H5.5L10 10H7z" fill="#dfe4d2"/><rect x="11" y="16.5" width="2" height="3" fill="#dfe4d2"/></svg>')}")`;
+document.documentElement.style.setProperty('--trees', TREES);
+
+/* ---------- reading the text ---------- */
+function model(){
+  const parts = parse($('src').value, { full: true });
+  const songs = [], dyks = [];
+  for (const p of parts){
+    if (/^did you know\b/i.test(p.title)){
+      let blocks = p.blocks.filter(b => b.lines && b.lines.length), sub = '';
+      if (p.underTitle && blocks.length){ sub = blocks[0].lines.join(' '); blocks = blocks.slice(1); }
+      dyks.push({ title: p.title, sub, facts: blocks.map(b => b.lines.join(' ')) });
+    } else songs.push(p);
+  }
+  return { songs, dyks };
+}
+
+/* ---------- measuring and splitting into pages ---------- */
+let FONT = 'sans';
+const pageOpen = (v, extra='', style='') => `<section class="bp v-${v} ${FONT} ${extra}"${style ? ` style="${style}"` : ''}>`;
+function shell(v, head, bodyClass){ return `${pageOpen(v)}${head}<main><div class="body ${bodyClass}"></div></main><footer>00</footer></section>`; }
+// Fills pages item by item at one type size. An item too tall for an empty page is split in half by lines.
+function paginate(v, headFirst, headCont, items, size, bodyClass){
+  const M = $('measure'), pages = []; let cur = [], b, m, room;
+  const open = () => {
+    M.innerHTML = shell(v, pages.length ? headCont : headFirst, bodyClass);
+    b = M.querySelector('.body'); m = M.querySelector('main'); b.style.fontSize = size + 'pt';
+    room = m.clientHeight - parseFloat(getComputedStyle(m).paddingTop) + 0.5;
+  };
+  open();
+  const queue = items.slice(), lh = size * 1.28 * 96 / 72;
+  let wraps = 0;
+  while (queue.length){
+    const it = queue.shift();
+    b.insertAdjacentHTML('beforeend', it.html);
+    if (b.scrollHeight <= room){ cur.push(it); b.lastElementChild.querySelectorAll('.bln').forEach(l => { if (l.offsetHeight > lh * 1.5) wraps++; }); continue; }
+    b.lastElementChild.remove();
+    if (cur.length){ pages.push(cur); cur = []; open(); queue.unshift(it); continue; }
+    const halves = it.split && it.split();
+    if (halves){ queue.unshift(...halves); continue; }
+    cur.push(Object.assign({}, it, { over: true }));   // a single line wider than the page: keep it, flag it
+  }
+  if (cur.length) pages.push(cur);
+  pages.wraps = wraps;   // lines too wide for the page, which break onto a second line
+  return pages;
+}
+// Biggest size that needs no more pages than the smallest size does.
+// Sizes that keep every line whole win; lines only break when they are too wide even at the smallest size.
+function fitItems(v, headFirst, headCont, items, min, max, bodyClass){
+  const at = s => paginate(v, headFirst, headCont, items, s, bodyClass);
+  const need = at(min).length;
+  const ok = (s, whole) => { const p = at(s); return p.length <= need && (!whole || !p.wraps); };
+  const whole = ok(min, true);
+  let size = max;
+  if (!ok(max, whole)){
+    let lo = min, hi = max;
+    for (let k = 0; k < 9; k++){ const mid = (lo + hi) / 2; if (ok(mid, whole)) lo = mid; else hi = mid; }
+    size = Math.floor(lo * 2) / 2;
+  }
+  const pages = at(size);
+  return { size, pages, over: pages.some(p => p.some(i => i.over)) };
+}
+function stanzaItem(cls, lines){
+  return {
+    html: `<div class="bst ${cls}">${lines.map(l => `<div class="bln">${esc(l)}</div>`).join('')}</div>`,
+    split: lines.length > 1 ? () => { const h = Math.ceil(lines.length / 2); return [stanzaItem(cls, lines.slice(0, h)), stanzaItem(cls, lines.slice(h))]; } : null,
+  };
+}
+function songItems(s){
+  return s.blocks.map(b => {
+    if (b.type === 'verse') return stanzaItem('', b.lines);
+    if (b.lines) return stanzaItem('ref', b.lines);
+    return { html: '<div class="bst cue">Refrain</div>' };
+  });
+}
+const songHead = (s, i) => `<header>${ICONS[i % ICONS.length]}<h2>${esc(s.title)}</h2>${s.key ? `<div class="key">${esc(s.key)}</div>` : ''}</header>`;
+const contHead = t => `<header class="cont"><h2>${esc(t)}</h2><div class="contd">(continued)</div></header>`;
+const CACHE = new Map();
+function memo(key, fn){ if (!CACHE.has(key)){ if (CACHE.size > 400) CACHE.clear(); CACHE.set(key, fn()); } return CACHE.get(key); }
+function layoutSong(s, i, v){
+  const V = VER[v];
+  return memo(JSON.stringify([v, FONT, i % ICONS.length, s.title, s.key, s.blocks]), () => {
+    const items = songItems(s), run = min => fitItems(v, songHead(s, i), contHead(s.title), items, min, V.max, 'lyr');
+    // Phone: shrink the type down to oneMin to keep a song on one page; only if that fails, spill to a second page at the bigger minimum.
+    if (V.oneMin){ const L = run(V.oneMin); if (L.pages.length === 1) return L; }
+    return run(V.min);
+  });
+}
+const tocHead = cont => `<header>${cont ? '' : ICONS[1]}<h2>Songs in This Book</h2>${cont ? '<div class="contd">(continued)</div>' : ''}</header>`;
+const tocItem = (i, t, pg) => ({ html: `<li><span class="tn">${i + 1}.</span><span class="tt">${esc(t)}</span><span class="dots"></span><span class="pg">${pg}</span></li>` });
+const dykHead = (d, cont) => `<header>${cont ? '' : ICONS[1]}<h2>${esc(d.title)}</h2>${cont ? '<div class="contd">(continued)</div>' : d.sub ? `<div class="sub">${esc(d.sub)}</div>` : ''}</header>`;
+const factItem = (f, k) => ({ html: `<div class="fact">${ICONS[(k + 1) % ICONS.length]}<div>${esc(f)}</div></div>` });
+
+/* ---------- building a version ---------- */
+function build(v){
+  const base = v === 'print' ? 'booklet' : v, V = VER[base];
+  const { songs, dyks } = model();
+  const title = $('bTitle').value.trim(), sub = $('bSub').value.trim();
+  const [close1, ...closeRest] = $('bClose').value.split('/').map(x => x.trim());
+  const pages = [];   // { kind, label, html(n) }
+  const N = songs.length;
+  pages.push({ kind:'cover', label:'Front cover', html: () => `${pageOpen(base, 'cover')}<div class="card">${ICONS[4]}<div class="cvt">${esc(title)}</div>${sub ? `<div class="cvs">${esc(sub)}</div>` : ''}<div class="cvc">${N} favorite carol${N === 1 ? '' : 's'} and songs</div>${ICONS[2].replace('class="ic"', 'class="ic sm"')}</div></section>` });
+
+  // Contents first, measured with dummy page numbers, so song page numbers are known afterwards.
+  const tocL = N ? memo(JSON.stringify(['toc', base, FONT, songs.map(s => s.title)]), () =>
+    fitItems(base, tocHead(false), tocHead(true), songs.map((s, i) => tocItem(i, s.title, '00')), V.tocMin, V.tocMax, 'toc-b')) : { pages: [] };
+  const maxP = base === 'mobile' ? Infinity : 2;   // booklet: a song fits one page or one open spread (no page turn mid-song). Phone: a spill to a second page is fine.
+  const favPage = () => ({ kind:'fav', filler:true, label:'Our Favorites (spare page)', html: num => `${pageOpen(base)}<header>${ICONS[2]}<h2>Our Favorites</h2></header><main><div class="lines">${'<i></i>'.repeat(14)}</div></main><footer>${num}</footer></section>` });
+  const dykPages = [];
+  dyks.forEach(d => {
+    const L = memo(JSON.stringify(['dyk', base, FONT, d]), () => fitItems(base, dykHead(d, false), dykHead(d, true), d.facts.map(factItem), V.dykMin, V.dykMax, 'facts'));
+    L.pages.forEach((pg, k) => dykPages.push({ kind:'dyk', filler:true, label:'Did You Know?', html: num => `${pageOpen(base)}${dykHead(d, k > 0)}<main><div class="body facts spread" style="font-size:${L.size}pt">${pg.map(it => it.html).join('')}</div></main><footer>${num}</footer></section>` }));
+  });
+  const songL = songs.map((s, i) => ({ title: s.title, L: layoutSong(s, i, base) }));
+  tocL.pages.forEach((pg, k) => {
+    const first = k === 0 ? 0 : tocL.pages.slice(0, k).reduce((a, p) => a + p.length, 0);
+    pages.push({ kind:'toc', label:'Contents', html: num => `${pageOpen(base)}${tocHead(k > 0)}<main><div class="body toc-b" style="font-size:${tocL.size}pt"><ol class="toc">${pg.map((_, j) => tocItem(first + j, songs[first + j].title, songL[first + j].start).html).join('')}</ol></div></main><footer>${num}</footer></section>` });
+  });
+  songL.forEach((r, i) => {
+    const cnt = r.L.pages.length;
+    // A two-page song starts on a left-hand (even) page, so both pages are open at once. A "Did You Know?" page (or a lined page) fills the gap.
+    if (base === 'booklet' && cnt === 2 && (pages.length + 1) % 2 === 1) pages.push(dykPages.shift() || favPage());
+    Object.assign(r, { size: r.L.size, pages: cnt, start: pages.length + 1, over: r.L.over, tooLong: cnt > maxP });
+    r.L.pages.forEach((pg, k) => pages.push({
+      kind:'song', song:i, label:`${songs[i].title}${k ? ' (continued)' : ''} · ${r.size} pt`, flag: r.over || r.tooLong,
+      html: num => `${pageOpen(base)}${k ? contHead(songs[i].title) : songHead(songs[i], i)}<main><div class="body lyr" style="font-size:${r.size}pt">${pg.map(it => it.html).join('')}</div></main><footer>${num}</footer></section>`,
+    }));
+  });
+  pages.push(...dykPages);
+  const back = { kind:'back', label:'Back cover', html: () => `${pageOpen(base, 'cover')}<div class="card">${ICONS[1]}${close1 ? `<div class="bkt">${esc(close1)}</div>` : ''}${closeRest.length ? `<div class="cvs">${esc(closeRest.join(' '))}</div>` : ''}</div></section>` };
+  // A folded booklet needs a multiple of 4 pages: fill the gap with "Our Favorites" pages.
+  if (base === 'booklet') while ((pages.length + 1) % 4) pages.push(favPage());
+  pages.push(back);
+  pages.forEach((p, k) => { p.num = k + 1; p.out = p.html(p.kind === 'cover' || p.kind === 'back' ? '' : p.num); });
+  return { pages, songs: songL.map(({ L, ...r }) => r), dyks: dyks.length };
+}
+// Saddle-stitch order: sheet s front = [last-2s, 1+2s], back = [2+2s, last-1-2s].
+function impose(count){
+  const out = [];
+  for (let s = 0; s < count / 4; s++){
+    out.push([count - 2 * s, 2 * s + 1], [2 * s + 2, count - 2 * s - 1]);
+  }
+  return out;
+}
+
+/* ---------- rendering ---------- */
+let VERSION = 'booklet';
+function render(){
+  const pv = $('preview'), info = build(VERSION), V = VER[VERSION];
+  $('pagesize').textContent = `@page{size:${V.page};margin:0}`;
+  if (!info.songs.length){ pv.innerHTML = '<div class="empty">Add a song to start.</div>'; $('songlist').innerHTML = ''; window.BOOK = { version: VERSION, pages: 0, songs: [] }; setStatus(info); return; }
+  let html = '';
+  if (VERSION === 'print'){
+    impose(info.pages.length).forEach((pair, k) => {
+      html += `<div class="pw" style="--w:11in;--h:8.5in" data-sheet="${k}"><div class="tag">Sheet ${Math.floor(k / 2) + 1}, ${k % 2 ? 'back' : 'front'} · pages ${pair[0]} and ${pair[1]}</div><div class="sheet">${pair.map(p => info.pages[p - 1].out).join('')}</div></div>`;
+    });
+  } else {
+    info.pages.forEach(p => {
+      html += `<div class="pw${p.flag ? ' flag' : ''}" style="--w:${V.w};--h:${V.h}" data-kind="${p.kind}" data-page="${p.num}"${p.kind === 'song' ? ` data-song="${p.song}"` : ''}><div class="tag">Page ${p.num} · ${esc(p.label)}</div>${p.out}</div>`;
+    });
+  }
+  pv.innerHTML = html; scalePreview();
+  window.BOOK = { version: VERSION, pages: info.pages.length, kinds: info.pages.map(p => p.kind), songs: info.songs, dyks: info.dyks, min: V.oneMin || V.min, max: V.max,
+    order: VERSION === 'print' ? impose(info.pages.length) : null };
+  $('songlist').innerHTML = info.songs.map((r, i, a) => `<li data-i="${i}"><button type="button" class="h" aria-label="Move ${esc(r.title)}: drag, or press the up and down arrow keys">≡</button><button type="button" class="go" data-i="${i}"><span class="n">${i + 1}</span><span class="t">${esc(r.title)}</span><span class="m">p. ${r.start}${r.pages > 1 ? '–' + (r.start + r.pages - 1) : ''}</span></button><button type="button" class="mv" data-d="-1" aria-label="Move ${esc(r.title)} up"${i === 0 ? ' disabled' : ''}>▲</button><button type="button" class="mv" data-d="1" aria-label="Move ${esc(r.title)} down"${i === a.length - 1 ? ' disabled' : ''}>▼</button></li>`).join('');
+  setStatus(info);
+}
+function setStatus(info){
+  const st = $('status'), N = info.songs.length, P = info.pages.length, over = info.songs.filter(s => s.over), long = info.songs.filter(s => s.tooLong);
+  st.classList.toggle('bad', over.length > 0);
+  st.classList.toggle('warn', long.length > 0);
+  $('print').disabled = !N;   // Make PDF is never blocked
+  if (!N){ st.textContent = 'No songs yet. Add a song below.'; $('printnote').textContent = ''; return; }
+  const two = info.songs.filter(s => s.pages > 1).length;
+  const smallest = Math.min(...info.songs.map(s => s.size));
+  const what = VERSION === 'print' ? `${P / 4} sheets of letter paper (${P} booklet pages)` : `${P} pages`;
+  const warn = long.length ? `<br><b>Page turn:</b> ${long.map(s => `${esc(s.title)} (${s.pages} pages)`).join(', ')} ${long.length === 1 ? 'is' : 'are'} too long for one page or two facing pages, so ${long.length === 1 ? 'it needs' : 'they need'} a page turn. Cutting a verse or splitting the song fixes it.` : '';
+  st.innerHTML = (over.length ? `<b>Check ${over.map(s => esc(s.title)).join(', ')}:</b> a line is too long for the page. Break it in two.<br>` : '<b>Ready.</b> ')
+    + `${N} songs, ${what}. Smallest type ${smallest} pt.${two ? ` ${two} song${two > 1 ? 's use' : ' uses'} two facing pages, so no page turn mid-song.` : ''}${warn}`;
+  $('printnote').innerHTML = {
+    booklet: 'Opens the print window. Choose <b>Save as PDF</b>. The page size is set for you. Good for emailing or reading on a computer.',
+    print: 'Opens the print window. Choose <b>Save as PDF</b>, or print straight away: Letter, <b>double-sided, flip on short edge</b>, scale 100%. Fold the stack in half and staple the fold.',
+    mobile: 'Opens the print window. Choose <b>Save as PDF</b>. Send this one to people who sing from their phones.',
+  }[VERSION];
+}
+function scalePreview(){
+  const pv = $('preview'), w = pv.clientWidth - 32, widest = parseFloat(VER[VERSION].w) * 96;
+  document.documentElement.style.setProperty('--s', Math.min(VERSION === 'print' ? .75 : 1, w / widest).toFixed(4));
+}
+
+/* ---------- saving, opening, adding ---------- */
+function setFont(f){
+  FONT = f === 'serif' ? 'serif' : 'sans';
+  $('fSerif').setAttribute('aria-pressed', FONT === 'serif');
+  $('fSans').setAttribute('aria-pressed', FONT === 'sans');
+  $('fontSwitch').setAttribute('aria-checked', FONT === 'serif');
+}
+function setVersion(v){
+  VERSION = VER[v] ? v : 'booklet';
+  document.querySelectorAll('#versions button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === VERSION));
+}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify({ title: $('bTitle').value, sub: $('bSub').value, close: $('bClose').value, font: FONT, version: VERSION, text: $('src').value })); } catch(e){} }
+function load(){
+  try { const d = JSON.parse(localStorage.getItem(STORE) || 'null'); if (d && d.text !== undefined){ $('bTitle').value = d.title || ''; $('bSub').value = d.sub || ''; $('bClose').value = d.close || ''; setFont(d.font); setVersion(d.version); $('src').value = d.text; return true; } } catch(e){}
+  return false;
+}
+function applyText(text){
+  const { meta, body } = splitHeader(text);
+  if (meta.booklet !== undefined) $('bTitle').value = meta.booklet;
+  if (meta.subtitle !== undefined) $('bSub').value = meta.subtitle;
+  if (meta.closing !== undefined) $('bClose').value = meta.closing;
+  if (meta.font !== undefined) setFont(/^serif/i.test(meta.font) ? 'serif' : 'sans');
+  $('src').value = body.replace(/^\n+/, '');
+  save(); render();
+}
+// Puts a new song after the last song, before any "Did You Know?" pages.
+function addSong(title, key, words){
+  title = title.trim(); key = key.trim(); words = words.replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (!title || !words) return { ok: false, msg: !title ? 'Type the song title first.' : 'Type or paste the words first.' };
+  if (key && !/^key\b/i.test(key)) key = 'Key of ' + key;
+  const block = `${title}\n${key ? key + '\n' : ''}\n${words}`;
+  const text = $('src').value.replace(/\s+$/, '');
+  const m = text.match(/(^|\n)\n\n(?=did you know\b)/i);
+  $('src').value = m ? `${text.slice(0, m.index)}\n\n\n${block}\n\n${text.slice(m.index)}\n` : `${text ? text + '\n\n\n' : ''}${block}\n`;
+  save(); render();
+  const i = window.BOOK.songs.length - 1, r = window.BOOK.songs[i];
+  return { ok: true, msg: `Added “${title}”. It is song ${i + 1}, on page ${r.start}.`, index: i };
+}
+function slug(s){ return (s || 'booklet').replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_|_$/g, '') || 'booklet'; }
+$('save').onclick = () => {
+  const text = `Booklet: ${$('bTitle').value.trim()}\nSubtitle: ${$('bSub').value.trim()}\nClosing: ${$('bClose').value.trim()}\nFont: ${FONT}\n\n\n${$('src').value.replace(/\s+$/, '')}\n`;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  a.download = slug($('bTitle').value) + '.txt'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$('open').onclick = () => $('file').click();
+$('file').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(applyText); e.target.value = ''; };
+$('reset').onclick = () => { if (confirm('Put back the 2026 booklet? Your added songs and changes will be removed.')) applyText(STARTER); };
+$('addSong').onclick = () => {
+  const r = addSong($('newTitle').value, $('newKey').value, $('newWords').value), box = $('added');
+  box.hidden = false; box.textContent = r.msg; box.classList.toggle('bad', !r.ok);
+  if (r.ok){ $('newTitle').value = $('newKey').value = $('newWords').value = ''; showSong(r.index); }
+};
+function showSong(i){ const el = document.querySelector(`.pw[data-song="${i}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+$('songlist').onclick = e => {
+  const mv = e.target.closest('.mv'), go = e.target.closest('.go');
+  if (mv){ const i = +mv.closest('li').dataset.i, d = +mv.dataset.d; moveSong(i, i + d); focusMove(i + d, d); return; }
+  if (!go) return;
+  if (VERSION === 'print'){ setVersion('booklet'); save(); render(); }
+  showSong(go.dataset.i);
+};
+function focusMove(i, d){ const li = document.querySelector(`#songlist li[data-i="${i}"]`); if (!li) return; const b = li.querySelector(`.mv[data-d="${d}"]`); (b && !b.disabled ? b : li.querySelector(`.mv:not([disabled])`) || li.querySelector('.h')).focus(); }
+// Songs are the blocks of text split by two blank lines. "Did You Know?" blocks stay where they are; songs swap places among the song slots.
+function blocksOf(text){
+  const out = []; let cur = [], blanks = 0;
+  for (const raw of text.replace(/\r\n?/g, '\n').split('\n')){
+    if (!raw.trim()){ blanks++; continue; }
+    if (blanks >= 2 && cur.length){ out.push(cur.join('\n')); cur = []; } else if (blanks === 1 && cur.length) cur.push('');
+    blanks = 0; cur.push(raw.replace(/\s+$/, ''));
+  }
+  if (cur.length) out.push(cur.join('\n'));
+  return out;
+}
+function moveSong(from, to){
+  const blocks = blocksOf($('src').value), isDyk = b => /^\s*did you know\b/i.test(b), songs = blocks.filter(b => !isDyk(b));
+  if (from === to || from < 0 || to < 0 || from >= songs.length || to >= songs.length) return window.BOOK;
+  songs.splice(to, 0, songs.splice(from, 1)[0]);
+  let k = 0;
+  $('src').value = blocks.map(b => isDyk(b) ? b : songs[k++]).join('\n\n\n') + '\n';
+  save(); render();
+  return window.BOOK;
+}
+// Dragging by the ≡ handle: pointer events cover mouse, finger and pen. Arrow keys on the handle also move the song.
+(() => {
+  const list = $('songlist'); let drag = null;
+  const rows = () => [...list.children];
+  const clear = () => rows().forEach(l => l.classList.remove('dragging', 'drop-above', 'drop-below'));
+  const target = y => { const r = rows(); let t = r.findIndex(l => y < l.getBoundingClientRect().bottom); return t < 0 ? r.length - 1 : t; };
+  list.addEventListener('pointerdown', e => {
+    const h = e.target.closest('.h'); if (!h || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const li = h.closest('li'); drag = { from: +li.dataset.i, to: +li.dataset.i };
+    h.setPointerCapture(e.pointerId); li.classList.add('dragging'); document.body.classList.add('dragging-song');
+  });
+  list.addEventListener('pointermove', e => {
+    if (!drag) return;
+    drag.to = target(e.clientY);
+    rows().forEach((l, i) => { l.classList.toggle('drop-above', i === drag.to && drag.to < drag.from); l.classList.toggle('drop-below', i === drag.to && drag.to > drag.from); });
+    const panel = document.querySelector('.panel'), sc = panel.scrollHeight > panel.clientHeight + 1 && getComputedStyle(panel).position === 'sticky' ? panel : window;
+    if (e.clientY < 80) sc.scrollBy(0, -14); else if (e.clientY > innerHeight - 80) sc.scrollBy(0, 14);
+  });
+  const end = e => { if (!drag) return; const d = drag; drag = null; clear(); document.body.classList.remove('dragging-song'); if (e.type === 'pointerup' && d.to !== d.from){ moveSong(d.from, d.to); const h = list.querySelector(`li[data-i="${d.to}"] .h`); if (h) h.focus(); } };
+  list.addEventListener('pointerup', end); list.addEventListener('pointercancel', end);
+  list.addEventListener('keydown', e => {
+    const h = e.target.closest('.h'); if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault(); const i = +h.closest('li').dataset.i, to = i + (e.key === 'ArrowUp' ? -1 : 1);
+    moveSong(i, to); const nh = list.querySelector(`li[data-i="${Math.max(0, Math.min(to, list.children.length - 1))}"] .h`); if (nh) nh.focus();
+  });
+})();
+$('versions').onclick = e => { const b = e.target.closest('button'); if (b){ setVersion(b.dataset.v); save(); render(); } };
+$('fSerif').onclick = () => { setFont('serif'); save(); render(); };
+$('fSans').onclick = () => { setFont('sans'); save(); render(); };
+$('fontSwitch').onclick = () => { setFont(FONT === 'serif' ? 'sans' : 'serif'); save(); render(); };
+// Chrome names the saved PDF after the page title.
+$('print').onclick = () => { const t = document.title; document.title = slug($('bTitle').value) + VER[VERSION].suffix; window.print(); document.title = t; };
+
+let timer;
+const later = () => { clearTimeout(timer); timer = setTimeout(() => { save(); render(); }, 450); };
+['src', 'bTitle', 'bSub', 'bClose'].forEach(id => $(id).addEventListener('input', later));
+window.addEventListener('resize', scalePreview);
+window.bookletMaker = { moveSong, applyText, render, parse, setVersion: v => { setVersion(v); render(); }, addSong, impose, STARTER };
+const had = load();
+Promise.all([...document.fonts].map(f => f.load())).then(() => document.fonts.ready).then(() => {
+  if (had) render(); else applyText(STARTER);
+  document.body.dataset.ready = 1;
+});
+</script>
+</body>
+</html>

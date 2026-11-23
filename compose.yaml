@@ -1,7 +1,8 @@
 # Run the tests:   docker compose run --rm test
 # Make a PDF:      docker compose run --rm pdf examples/holiday-caroling.txt binder.pdf
-# Open the tool:   docker compose up -d web   then go to http://localhost:8080  (stop: docker compose down)
-#                  It rebuilds binder-maker.html when you save anything in src/. Reload the page to see it.
+# Booklet PDFs:    docker compose run --rm booklet-pdf examples/caroling-booklet.txt booklet-pdfs   (writes all three versions)
+# Open the tool:   docker compose up -d web   then go to http://localhost:8080  (Booklet Maker: http://localhost:8080/booklet-maker.html; stop: docker compose down)
+#                  It rebuilds binder-maker.html and booklet-maker.html when you save anything in src/. Reload the page to see it.
 # Rebuild once:    docker compose run --rm build-html
 # Convert old:     docker compose run --rm convert-legacy songs.txt out.txt   (songs.txt must be in this folder)
 services:
@@ -22,6 +23,15 @@ services:
       - .:/app
       - /app/node_modules
     entrypoint: ["node", "scripts/render-pdf.js"]
+  booklet-pdf:
+    build: .
+    image: mpc-binder-tools
+    init: true
+    ipc: host
+    volumes:
+      - .:/app
+      - /app/node_modules
+    entrypoint: ["node", "scripts/render-booklet.js"]
   watch:
     build: .
     image: mpc-binder-tools
