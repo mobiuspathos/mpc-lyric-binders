@@ -80,7 +80,7 @@ The first run downloads the test image (about 3.7 GB) and takes a few minutes. A
 
 - **Booklet Maker:** the 2026 booklet renders in all three versions, page order and the multiple of 4, two-page songs on facing pages, too-long songs flagged but never blocked, phone shrink-then-spill, contents page numbers, the serif switch, PRINT fold order, PDF page sizes, **Add a song**, and big tap targets on a phone, and reordering songs by mouse drag, finger drag, arrow keys and ▲ ▼.
 
-It ends with "59 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
+It ends with "60 passed". A red ✘ names the rule that broke and shows what it expected. If you have Node.js installed, `npm install` once and then `npm test` does the same without Docker.
 
 When you change a rule on purpose, update the matching test in `tests/` in the same commit. If you change the Playwright version in `package.json`, change it in `Dockerfile` too.
 

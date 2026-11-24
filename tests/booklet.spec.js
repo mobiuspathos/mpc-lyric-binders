@@ -87,7 +87,10 @@ test('a two-page song starts on a left-hand page (so there is no page turn) and 
   expect(long.start % 2).toBe(0);                       // even = left-hand page, facing the next page
   expect(b.kinds.slice(0, 7)).toEqual(['cover', 'toc', 'song', 'song', 'fav', 'song', 'song']);
   expect(b.songs[3].start).toBe(long.start + 2);
-  await expect(page.locator('.pw[data-song="2"] .contd')).toHaveText('(continued)');
+  // The second page has no title and no "(continued)": it just carries on with the next line.
+  await expect(page.locator('.pw[data-song="2"]')).toHaveCount(2);
+  await expect(page.locator('.pw[data-song="2"]').nth(1).locator('header, h2, .contd')).toHaveCount(0);
+  await expect(page.locator('.pw[data-song="2"]').nth(1).locator('.bln').first()).toBeVisible();
   await expect(page.locator('.pw[data-kind=toc] .pg')).toHaveText(['3', '4', String(long.start), String(b.songs[3].start)]);
 });
 
@@ -281,4 +284,14 @@ test('songs can be dragged with a finger on a phone', async ({ browser }) => {
   await touch('touchEnd', y1);
   expect((await page.evaluate(() => window.BOOK.songs.map(s => s.title)))).toEqual(['Bravo', 'Charlie', 'Alpha']);
   await ctx.close();
+});
+
+test('no song repeats its title or "(continued)" on a second page, in any version', async ({ page }) => {
+  await load(page, HEAD + song('Long', 5, 6));
+  for (const v of ['booklet', 'print', 'mobile']) {
+    const b = await version(page, v);
+    expect(b.songs[0].pages, v).toBeGreaterThan(1);
+    expect(await page.locator('.bp h2', { hasText: 'Long' }).count(), v).toBe(v === 'print' ? 1 : 1);
+    await expect(page.locator('.contd').filter({ hasText: 'continued' }), v).toHaveCount(0);
+  }
 });

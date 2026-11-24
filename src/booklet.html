@@ -258,7 +258,7 @@ const $ = id => document.getElementById(id);
 {{lyrics-core}}
 
 /* ---------- the three versions ---------- */
-// Type sizes in pt. min is never undercut; a song that won't fit at min carries on to a "(continued)" page.
+// Type sizes in pt. min is never undercut; a song that won't fit at min carries on to a second page, with no heading.
 const VER = {
   booklet: { min:13, max:16, tocMin:11, tocMax:15, dykMin:13, dykMax:20, page:'5.5in 8.5in', w:'5.5in', h:'8.5in', suffix:'' },
   mobile:  { oneMin:14, min:16, max:20, tocMin:13, tocMax:17, dykMin:15, dykMax:24, page:'5in 8.888889in', w:'5in', h:'8.888889in', suffix:'_mobile' },
@@ -352,7 +352,8 @@ function songItems(s){
   });
 }
 const songHead = (s, i) => `<header>${ICONS[i % ICONS.length]}<h2>${esc(s.title)}</h2>${s.key ? `<div class="key">${esc(s.key)}</div>` : ''}</header>`;
-const contHead = t => `<header class="cont"><h2>${esc(t)}</h2><div class="contd">(continued)</div></header>`;
+// A song's second page has no title or "(continued)": it just carries on with the next line.
+const contHead = t => '';
 const CACHE = new Map();
 function memo(key, fn){ if (!CACHE.has(key)){ if (CACHE.size > 400) CACHE.clear(); CACHE.set(key, fn()); } return CACHE.get(key); }
 function layoutSong(s, i, v){
